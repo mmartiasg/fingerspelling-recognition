@@ -37,7 +37,7 @@ VOCAB_SIZE = len([w for w, _ in num_to_char.items()])
 
 def resize_pad(x, phrase):
     if tf.shape(x)[0] < MAX_LENGHT_SOURCE:
-        x = tf.pad(x, ([[0, MAX_LENGHT_SOURCE-tf.shape(x)[0]], [0, 0]]))
+        x = tf.pad(x, ([[0, MAX_LENGHT_SOURCE-tf.shape(x)[0]], [0, 0]]), mode = 'CONSTANT', constant_values=0.0)
     else:
         x = tf.slice(x, [0, 0], [MAX_LENGHT_SOURCE, FEATURES_SIZE])
 
@@ -89,7 +89,7 @@ def convert_fn(landmarks, phrase):
     else:
         phrase_with_indexes = tf.slice(phrase_with_indexes, [0], [TARGET_MAX_LENGHT])
 
-    return landmarks, phrase_with_indexes
+    return tf.cast(landmarks, dtype=tf.float32), tf.cast(phrase_with_indexes, dtype=tf.int32)
 
 
 def build_datset_train_val(split=0.8, batch_size=128):
