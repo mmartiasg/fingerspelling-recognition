@@ -7,12 +7,25 @@ from src.Transformers.Encoder import TransformerEncoder
 from src.Transformers.Decoder import TransformerDecoder
 from src.Transformers.PositionalEncoding import BasicPositionalEmbeddings
 import math
+from src.custom.metrics import SparseLevenshtein
 
 
 def build_transformer_model(trial):
 
-    ATTENTION_HEADS = trial.suggest_int('attention_heads', 1, 8, step=2)
-    LATENT_DIMS = math.ceil(DIM_EMBEDDINGS/ATTENTION_HEADS)
+    ATTENTION_HEADS = 1
+    LATENT_DIMS = 64
+    LR = 1e-3
+    DROPOUT_RATE_DECODER=0.1
+    DROPOUT_RATE_OUTPUT=0.2
+    DENSE_LAYERS = 1
+
+    if trial is not None:
+        ATTENTION_HEADS = trial.suggest_int('attention_heads', 1, 8, step=2)
+        LATENT_DIMS = math.ceil(DIM_EMBEDDINGS/ATTENTION_HEADS)
+        LR = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
+        DROPOUT_RATE_DECODER = trial.suggest_float("drop_out_out_decoder", 0.0, 0.5)
+        DENSE_LAYERS = trial.suggest_int('dense_layers', 1, 5, step=1)
+        DROPOUT_RATE_OUTPUT=trial.suggest_float("drop_out", 0.0, 0.5)
 
     # INPUT SOURCE
     source = tf.keras.layers.Input(shape=(MAX_LENGHT_SOURCE, FEATURES_SIZE), dtype=tf.float32, name="source")
@@ -32,23 +45,24 @@ def build_transformer_model(trial):
     decoder = TransformerDecoder(num_heads=ATTENTION_HEADS, dim_emb=DIM_EMBEDDINGS, dim_dense=LATENT_DIMS)
 
     decoded_target_sequence = decoder(encoded_source_sequence, target_emb)
-    decoded_target_sequence = tf.keras.layers.Dropout(rate=trial.suggest_float("drop_out_out_decoder", 0.0, 0.5))(decoded_target_sequence)
+    decoded_target_sequence = tf.keras.layers.Dropout(rate=DROPOUT_RATE_DECODER)(decoded_target_sequence)
     # DECODER END
 
-    for layer_index in range(trial.suggest_int('dense_layers', 1, 5, step=1)):
+    for layer_index in range(DENSE_LAYERS):
         decoded_target_sequence = tf.keras.layers.Dense(units=FEATURES_SIZE, name=f"dense_layers_{layer_index}")(decoded_target_sequence)
 
-    decoded_target_sequence = tf.keras.layers.Dropout(rate=trial.suggest_float("drop_out", 0.0, 0.5))(decoded_target_sequence)
+    decoded_target_sequence = tf.keras.layers.Dropout(rate=DROPOUT_RATE_OUTPUT)(decoded_target_sequence)
 
     next_token = tf.keras.layers.Dense(units=VOCAB_SIZE, activation="softmax")(decoded_target_sequence)
 
     # CREATE MODEL ENCODER / DECODER
     encoder_decoder_model = tf.keras.Model(inputs=[source, target], outputs=next_token)
 
-    encoder_decoder_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)),
+    encoder_decoder_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LR),
                                  loss="sparse_categorical_crossentropy",
-                                 metrics=["accuracy"],
-                                 jit_compile=True
+                                 metrics=["accuracy", SparseLevenshtein()],
+                                 #XLA compilation issues with device location of int32 variables cannot be placed in GPU
+                                 jit_compile=False
     )
 
     return encoder_decoder_model

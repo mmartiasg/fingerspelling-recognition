@@ -3,6 +3,7 @@ from src.data_utils.dataset import VOCAB_SIZE
 import tensorflow as tf
 import tensorflow_models as tfm
 from src.custom.layers import LandmarkEmbedding
+from src.custom.metrics import Levenshtein
 
 
 def build_gru_model(trial):
@@ -57,7 +58,7 @@ def build_gru_model(trial):
 
     encoder_decoder_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)),
                                  loss="sparse_categorical_crossentropy",
-                                 metrics=["accuracy"],
+                                 metrics=["accuracy", Levenshtein()],
                                  jit_compile=True
     )
 
