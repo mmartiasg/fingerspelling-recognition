@@ -33,7 +33,9 @@ char_to_num[unk_token] = unk_token_idx
 char_to_num[start_token] = start_token_idx
 char_to_num[end_token] = end_token_idx
 num_to_char = {j:i for i,j in char_to_num.items()}
-VOCAB_SIZE = len([w for w, _ in num_to_char.items()])
+
+# remove padding token
+VOCAB_SIZE = len([w for w, _ in num_to_char.items()]) - 1
 
 def resize_pad(x, phrase):
     if tf.shape(x)[0] < MAX_LENGHT_SOURCE:
@@ -63,13 +65,25 @@ table = tf.lookup.StaticHashTable(
     name="class_weight"
 )
 
-itext_vectorizer = tf.keras.layers.TextVectorization(
-    output_sequence_length=TARGET_MAX_LENGHT,
-    output_mode="int",
-    standardize=None,
-    split="character",
-    vocabulary=[w for w, _ in char_to_num.items()]
-)
+# table = tf.lookup.StaticHashTable(
+#     initializer=tf.lookup.KeyValueTensorInitializer(
+#         keys=list(char_to_num.keys()),
+#         values=list(char_to_num.values()),
+#     ),
+#     default_value=tf.constant(-1),
+#     name="class_weight"
+# )
+
+# def convert_fn(landmarks, phrase):
+#     # Add start and end pointers to phrase.
+#     phrase = start_token + phrase + end_token
+#     phrase = tf.strings.bytes_split(phrase)
+#     phrase = table.lookup(phrase)
+#     # Vectorize and add padding.
+#     phrase = tf.pad(phrase, paddings=[[0, 64 - tf.shape(phrase)[0]]], mode = 'CONSTANT',
+#                     constant_values = pad_token_idx)
+#     # Apply pre_process function to the landmarks.
+#     return pre_process(landmarks), phrase
 
 def convert_fn(landmarks, phrase):
 
@@ -77,17 +91,17 @@ def convert_fn(landmarks, phrase):
     phrase_with_start_end_token = start_token + phrase + end_token
     phrase_splited = tf.strings.bytes_split(phrase_with_start_end_token)
     phrase_with_indexes = table.lookup(phrase_splited)
+
     # Vectorize and add padding.
-    # 65 added the UNK token
-    if tf.shape(phrase_with_indexes)[0] < TARGET_MAX_LENGHT:
-        phrase_with_indexes = tf.pad(
-                                    phrase_with_indexes,
-                                    paddings=[[0, TARGET_MAX_LENGHT-tf.shape(phrase_with_indexes)[0]]],
-                                    mode = 'CONSTANT',
-                                    constant_values = pad_token_idx
-                            )
-    else:
-        phrase_with_indexes = tf.slice(phrase_with_indexes, [0], [TARGET_MAX_LENGHT])
+    # if tf.shape(phrase_with_indexes)[0] < TARGET_MAX_LENGHT:
+    phrase_with_indexes = tf.pad(
+                                phrase_with_indexes,
+                                paddings=[[0, TARGET_MAX_LENGHT-tf.shape(phrase_with_indexes)[0]]],
+                                mode = 'CONSTANT',
+                                constant_values = pad_token_idx
+                        )
+    # else:
+    #     phrase_with_indexes = tf.slice(phrase_with_indexes, [0], [TARGET_MAX_LENGHT])
 
     return tf.cast(landmarks, dtype=tf.float32), tf.cast(phrase_with_indexes, dtype=tf.int32)
 
@@ -115,7 +129,7 @@ def build_datset_train_val(split=0.8, batch_size=128):
                         .map(decode_fn, num_parallel_calls=tf.data.AUTOTUNE)
                         .map(resize_pad, num_parallel_calls=tf.data.AUTOTUNE)
                         .map(convert_fn, num_parallel_calls=tf.data.AUTOTUNE)
-                        .map(lambda landmark, phrase: ({"source":landmark, "target":phrase[:-1]}, phrase[1:]))
+                        .map(lambda landmark, phrase: ({"source":landmark, "target":phrase[:-1]}, phrase[1:]), num_parallel_calls=tf.data.AUTOTUNE)
                         .batch(batch_size)
                         .prefetch(tf.data.AUTOTUNE)
                     )
@@ -124,7 +138,7 @@ def build_datset_train_val(split=0.8, batch_size=128):
                         .map(decode_fn, num_parallel_calls=tf.data.AUTOTUNE)
                         .map(resize_pad, num_parallel_calls=tf.data.AUTOTUNE)
                         .map(convert_fn, num_parallel_calls=tf.data.AUTOTUNE)
-                        .map(lambda landmark, phrase: ({"source":landmark, "target":phrase[:-1]}, phrase[1:]))
+                        .map(lambda landmark, phrase: ({"source":landmark, "target":phrase[:-1]}, phrase[1:]), num_parallel_calls=tf.data.AUTOTUNE)
                         .cache()
                         .batch(batch_size)
                         .prefetch(tf.data.AUTOTUNE)
