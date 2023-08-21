@@ -1,7 +1,6 @@
 from src.constants import MAX_LENGHT_SOURCE, FEATURES_SIZE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT, ATTENTION_HEADS
 from src.data_utils.dataset import VOCAB_SIZE
 import tensorflow as tf
-import tensorflow_models as tfm
 from src.custom.layers import LandmarkEmbedding, LandmarkEmbeddingV2
 from src.Transformers.Encoder import TransformerEncoder
 from src.Transformers.Decoder import TransformerDecoder
