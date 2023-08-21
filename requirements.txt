@@ -5,7 +5,6 @@ numpy==1.24.3
 scipy==1.10.1
 tqdm==4.65.0
 optuna==3.3.0
-requests==2.31.0
 matplotlib==3.7.2
 optuna-dashboard==0.11.0
 jupyter
@@ -13,3 +12,4 @@ notebook
 matplotlib
 kaggle
 pyarrow
+optuna-dashboard
