@@ -42,12 +42,12 @@ def build_prod_transformer_model_v1(trial):
     return encoder_decoder_model
 
 def build_prod_transformer_model_v2(trial):
-    ATTENTION_HEADS = 12
+    ATTENTION_HEADS = 7
     LR = 1e-4
-    DROPOUT_RATE_DECODER=0.1
-    DROPOUT_RATE_OUTPUT=0.2
-    DENSE_LAYERS = 5
-    ENCODER_KERNEL_SIZE = 10
+    DROPOUT_RATE_DECODER=0.5
+    DROPOUT_RATE_OUTPUT=0.25
+    DENSE_LAYERS = 4
+    ENCODER_KERNEL_SIZE = 6
 
     if trial is not None:
         # Second version change this to 10

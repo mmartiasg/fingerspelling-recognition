@@ -107,9 +107,9 @@ def pre_process(x):
     # hand = tf.concat([hand_x[..., tf.newaxis], hand_y[..., tf.newaxis], hand_z[..., tf.newaxis]], axis=-1)
     hand = tf.concat([hand_x[..., tf.newaxis], hand_y[..., tf.newaxis]], axis=-1)
     
-    mean = tf.math.reduce_mean(hand, axis=1)[:, tf.newaxis, :]
-    std = tf.math.reduce_std(hand, axis=1)[:, tf.newaxis, :]
-    hand = (hand - mean) / std
+    # mean = tf.math.reduce_mean(hand, axis=1)[:, tf.newaxis, :]
+    # std = tf.math.reduce_std(hand, axis=1)[:, tf.newaxis, :]
+    # hand = (hand - mean) / std
 
     # pose_x = pose[:, 0*(len(LPOSE_IDX)//3) : 1*(len(LPOSE_IDX)//3)]
     # pose_y = pose[:, 1*(len(LPOSE_IDX)//3) : 2*(len(LPOSE_IDX)//3)]
