@@ -2,8 +2,8 @@ import math
 import numpy as np
 import json
 
-MAX_LENGHT_SOURCE = 120
-DIM_EMBEDDINGS = 512
+MAX_LENGHT_SOURCE = 128
+DIM_EMBEDDINGS = 128
 ATTENTION_HEADS = 8
 
 with open ("../data/asl-fingerspelling/character_to_prediction_index.json", "r") as f:

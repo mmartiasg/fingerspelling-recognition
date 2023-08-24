@@ -1,14 +1,15 @@
 import tensorflow as tf
 
-@tf.keras.utils.register_keras_serializable(name="sparse_levenshtein")
-class SparseLevenshtein(tf.keras.metrics.Metric):
 
-    def __init__(self, name="sparse_levenshtein", **kwargs):
+@tf.keras.utils.register_keras_serializable(name="sparse_levenshtein_v1")
+class SparseLevenshtein(tf.keras.metrics.Metric):
+    def __init__(self, name="sparse_levenshtein_v1", **kwargs):
         super().__init__(name=name, **kwargs)
         #Sum average
         self.absolute_sum = self.add_weight(name="absolute_sum", initializer="zeros", dtype="float32")
         #Total samples sum batch size
         self.total_samples = self.add_weight(name="total_samples", initializer="zeros", dtype="int32")
+        self.supports_masking = True
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         distance = tf.edit_distance(tf.sparse.from_dense(y_true), tf.sparse.from_dense(tf.cast(tf.argmax(y_pred, axis=2), dtype=tf.int32)))
@@ -25,7 +26,9 @@ class SparseLevenshtein(tf.keras.metrics.Metric):
         self.total_samples.assign(0)
 
     def get_config(self):
-        return {}
+        config = super().get_config()
+        return config
+
 
 @tf.keras.utils.register_keras_serializable(name="sparse_levenshtein_v2")
 class SparseLevenshteinV2(tf.keras.metrics.Metric):
@@ -52,4 +55,5 @@ class SparseLevenshteinV2(tf.keras.metrics.Metric):
         self.total_samples.assign(0)
 
     def get_config(self):
-        return {}
+        config = super().get_config()
+        return config
