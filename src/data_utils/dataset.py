@@ -3,7 +3,7 @@ import math
 import numpy as np
 import os
 import json
-from src.constants import TARGET_MAX_LENGHT, MAX_LENGHT_SOURCE, FEATURES_SIZE, FEATURE_COLUMNS
+from src.constants import TARGET_MAX_LENGHT, MAX_LENGHT_SOURCE
 
 # Constants
 DATASET_DIR = "../data/asl-fingerspelling"
@@ -35,29 +35,26 @@ num_to_char = {j:i for i,j in char_to_num.items()}
 VOCAB_SIZE = len([w for w, _ in num_to_char.items()]) - 1
 
 
-# LPOSE = [13, 15, 17, 19, 21]
-# RPOSE = [14, 16, 18, 20, 22]
-# POSE = LPOSE + RPOSE
+LPOSE = [13, 15, 17, 19, 21]
+RPOSE = [14, 16, 18, 20, 22]
+POSE = LPOSE + RPOSE
 
-# X = [f'x_right_hand_{i}' for i in range(21)] + [f'x_left_hand_{i}' for i in range(21)] + [f'x_pose_{i}' for i in POSE]
-# Y = [f'y_right_hand_{i}' for i in range(21)] + [f'y_left_hand_{i}' for i in range(21)] + [f'y_pose_{i}' for i in POSE]
-
-X = [f'x_right_hand_{i}' for i in range(21)] + [f'x_left_hand_{i}' for i in range(21)]
-Y = [f'y_right_hand_{i}' for i in range(21)] + [f'y_left_hand_{i}' for i in range(21)]
+X = [f'x_right_hand_{i}' for i in range(21)] + [f'x_left_hand_{i}' for i in range(21)] + [f'x_pose_{i}' for i in POSE]
+Y = [f'y_right_hand_{i}' for i in range(21)] + [f'y_left_hand_{i}' for i in range(21)] + [f'y_pose_{i}' for i in POSE]
 # Z = [f'z_right_hand_{i}' for i in range(21)] + [f'z_left_hand_{i}' for i in range(21)] + [f'z_pose_{i}' for i in POSE]
 
 # FEATURE_COLUMNS = X + Y + Z
 FEATURE_COLUMNS = np.array(X + Y)
 
-# X_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "x_" in col]
-# Y_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "y_" in col]
+X_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "x_" in col]
+Y_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "y_" in col]
 # Z_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "z_" in col]
 
 RHAND_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if "right" in col]
 LHAND_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "left" in col]
 
-# RPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col and int(col[-2:]) in RPOSE]
-# LPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col and int(col[-2:]) in LPOSE]
+RPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col and int(col[-2:]) in RPOSE]
+LPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col and int(col[-2:]) in LPOSE]
 
 
 # Function to resize and add padding.
@@ -72,8 +69,8 @@ def resize_pad(x):
 def pre_process(x):
     rhand = tf.gather(x, RHAND_IDX, axis=1)
     lhand = tf.gather(x, LHAND_IDX, axis=1)
-    # rpose = tf.gather(x, RPOSE_IDX, axis=1)
-    # lpose = tf.gather(x, LPOSE_IDX, axis=1)
+    rpose = tf.gather(x, RPOSE_IDX, axis=1)
+    lpose = tf.gather(x, LPOSE_IDX, axis=1)
     
     rnan_idx = tf.reduce_any(tf.math.is_nan(rhand), axis=1)
     lnan_idx = tf.reduce_any(tf.math.is_nan(lhand), axis=1)
@@ -84,7 +81,7 @@ def pre_process(x):
     # For dominant hand
     if rnans > lnans:
         hand = lhand
-        # pose = lpose
+        pose = lpose
         
         hand_x = hand[:, 0*(len(LHAND_IDX)//2) : 1*(len(LHAND_IDX)//2)]
         hand_y = hand[:, 1*(len(LHAND_IDX)//2) : 2*(len(LHAND_IDX)//2)]
@@ -93,13 +90,15 @@ def pre_process(x):
 
         hand = tf.concat([1-hand_x, hand_y], axis=1)
         
-        # pose_x = pose[:, 0*(len(LPOSE_IDX)//3) : 1*(len(LPOSE_IDX)//3)]
-        # pose_y = pose[:, 1*(len(LPOSE_IDX)//3) : 2*(len(LPOSE_IDX)//3)]
+        pose_x = pose[:, 0*(len(LPOSE_IDX)//2) : 1*(len(LPOSE_IDX)//2)]
+        pose_y = pose[:, 1*(len(LPOSE_IDX)//2) : 2*(len(LPOSE_IDX)//2)]
         # pose_z = pose[:, 2*(len(LPOSE_IDX)//3) : 3*(len(LPOSE_IDX)//3)]
         # pose = tf.concat([1-pose_x, pose_y, pose_z], axis=1)
+        pose = tf.concat([1-pose_x, pose_y], axis=1)
+
     else:
         hand = rhand
-        # pose = rpose
+        pose = rpose
     
     hand_x = hand[:, 0*(len(LHAND_IDX)//2) : 1*(len(LHAND_IDX)//2)]
     hand_y = hand[:, 1*(len(LHAND_IDX)//2) : 2*(len(LHAND_IDX)//2)]
@@ -107,26 +106,26 @@ def pre_process(x):
     # hand = tf.concat([hand_x[..., tf.newaxis], hand_y[..., tf.newaxis], hand_z[..., tf.newaxis]], axis=-1)
     hand = tf.concat([hand_x[..., tf.newaxis], hand_y[..., tf.newaxis]], axis=-1)
     
-    mean = tf.math.reduce_mean(hand, axis=1)[:, tf.newaxis, :]
-    std = tf.math.reduce_std(hand, axis=1)[:, tf.newaxis, :]
-    hand = (hand - mean) / std
+    # mean = tf.math.reduce_mean(hand, axis=1)[:, tf.newaxis, :]
+    # std = tf.math.reduce_std(hand, axis=1)[:, tf.newaxis, :]
+    # hand = (hand - mean) / std
 
-    # pose_x = pose[:, 0*(len(LPOSE_IDX)//3) : 1*(len(LPOSE_IDX)//3)]
-    # pose_y = pose[:, 1*(len(LPOSE_IDX)//3) : 2*(len(LPOSE_IDX)//3)]
+    pose_x = pose[:, 0*(len(LPOSE_IDX)//2) : 1*(len(LPOSE_IDX)//2)]
+    pose_y = pose[:, 1*(len(LPOSE_IDX)//2) : 2*(len(LPOSE_IDX)//2)]
     # pose_z = pose[:, 2*(len(LPOSE_IDX)//3) : 3*(len(LPOSE_IDX)//3)]
     # pose = tf.concat([pose_x[..., tf.newaxis], pose_y[..., tf.newaxis], pose_z[..., tf.newaxis]], axis=-1)
-    # pose = tf.concat([pose_x[..., tf.newaxis], pose_y[..., tf.newaxis]], axis=-1)
+    pose = tf.concat([pose_x[..., tf.newaxis], pose_y[..., tf.newaxis]], axis=-1)
     
-    # x = tf.concat([hand, pose], axis=1)
-    x=hand
+    x = tf.concat([hand, pose], axis=1)
+    # x=hand
     x = resize_pad(x)
     
     x = tf.where(tf.math.is_nan(x), tf.zeros_like(x), x)
 
-    # x = tf.reshape(x, (MAX_LENGHT_SOURCE, len(LHAND_IDX) + len(LPOSE_IDX)))
+    x = tf.reshape(x, (MAX_LENGHT_SOURCE, len(LHAND_IDX) + len(LPOSE_IDX)))
 
     # not taking the z coordinates
-    x = tf.reshape(x, (MAX_LENGHT_SOURCE, len(LHAND_IDX)))
+    # x = tf.reshape(x, (MAX_LENGHT_SOURCE, len(LHAND_IDX)))
     return x
 
 

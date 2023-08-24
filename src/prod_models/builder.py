@@ -1,9 +1,10 @@
 import tensorflow as tf
-from src.constants import MAX_LENGHT_SOURCE, FEATURES_SIZE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT, ATTENTION_HEADS
+from src.constants import MAX_LENGHT_SOURCE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT, ATTENTION_HEADS
 from src.data_utils.dataset import VOCAB_SIZE, FEATURE_COLUMNS
 import math
 from src.custom.metrics import SparseLevenshtein
 from src.prod_models.Fingerspelling import FingerSpellingV1, FingerSpellingV2
+
 
 def build_prod_transformer_model_v1(trial):
     ATTENTION_HEADS = 1
@@ -14,7 +15,7 @@ def build_prod_transformer_model_v1(trial):
     ENCODER_KERNEL_SIZE = 7
 
     if trial is not None:
-        ATTENTION_HEADS = trial.suggest_int('attention_heads', 1, 8)
+        ATTENTION_HEADS = trial.suggest_int('attention_heads', 1, 10)
         LR = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
         DROPOUT_RATE_DECODER = trial.suggest_float("drop_out_out_decoder", 0.0, 0.5, step=0.05)
         DENSE_LAYERS = trial.suggest_int('dense_layers', 1, 5)

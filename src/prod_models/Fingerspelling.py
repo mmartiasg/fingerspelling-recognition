@@ -4,8 +4,8 @@ from src.Transformers.Decoder import TransformerDecoder
 import math
 from src.custom.layers import LandmarkEmbeddingV1, LandmarkEmbeddingV2
 from src.Transformers.PositionalEncoding import BasicPositionalEmbeddings
-from src.constants import FEATURE_COLUMNS, TARGET_MAX_LENGHT, MAX_LENGHT_SOURCE
-from src.data_utils.dataset import VOCAB_SIZE, start_token_idx
+from src.constants import TARGET_MAX_LENGHT, MAX_LENGHT_SOURCE
+from src.data_utils.dataset import VOCAB_SIZE, start_token_idx, FEATURE_COLUMNS
 
 
 @tf.keras.utils.register_keras_serializable(name="finger_spelling_v1")
