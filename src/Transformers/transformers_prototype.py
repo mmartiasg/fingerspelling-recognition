@@ -1,13 +1,14 @@
-from src.constants import MAX_LENGHT_SOURCE, FEATURES_SIZE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT, ATTENTION_HEADS
-from src.data_utils.dataset import VOCAB_SIZE
+from src.constants import MAX_LENGHT_SOURCE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT, ATTENTION_HEADS
+from src.data_utils.dataset import VOCAB_SIZE, FEATURE_COLUMNS
 import tensorflow as tf
-from src.custom.layers import LandmarkEmbedding, LandmarkEmbeddingV2
+from src.custom.layers import LandmarkEmbeddingV1, LandmarkEmbeddingV2
 from src.Transformers.Encoder import TransformerEncoder
 from src.Transformers.Decoder import TransformerDecoder
 from src.Transformers.PositionalEncoding import BasicPositionalEmbeddings
 import math
 from src.custom.metrics import SparseLevenshtein, SparseLevenshteinV2
 
+FEATURES_SIZE = int(FEATURE_COLUMNS.shape[0]/2)
 
 def build_transformer_model_v1(trial):
 
