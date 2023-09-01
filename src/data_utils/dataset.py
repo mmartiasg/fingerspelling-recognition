@@ -57,6 +57,9 @@ RPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col 
 LPOSE_IDX = [int(i) for i, col in enumerate(FEATURE_COLUMNS)  if  "pose" in col and int(col[-2:]) in LPOSE]
 
 
+# one had/posture from 1 side at a time that reduces the input by half
+FEATURES_SIZE = math.ceil(FEATURE_COLUMNS.shape[0]/2)
+
 # Function to resize and add padding.
 def resize_pad(x):
     if tf.shape(x)[0] < MAX_LENGHT_SOURCE:
