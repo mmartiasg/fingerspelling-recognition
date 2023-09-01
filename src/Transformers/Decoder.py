@@ -1,6 +1,7 @@
 import tensorflow as tf
+from src.data_utils.dataset import pad_token_idx
 
-@tf.keras.utils.register_keras_serializable(name="decoder")
+@tf.keras.utils.register_keras_serializable(name="transformers_decoder")
 class TransformerDecoder(tf.keras.layers.Layer):
     def __init__(self, num_heads, dim_emb, dim_dense, **kwargs):
         super().__init__(**kwargs)
@@ -37,7 +38,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
         # [sequence_length,]
         j = tf.range(sequence_length)
 
-        mask = tf.cast(i >= j, dtype="int32")
+        # mask = tf.cast(i >= j, dtype=tf.int32) +  tf.cast(i < j, dtype=tf.int32) * pad_token_idx
+        mask = tf.cast(i >= j, dtype=tf.int32)
         mask = tf.reshape(mask, (1, input_shape[1], input_shape[1]))
         mult = tf.concat(
             # Add a dimension [batch size, 1]
@@ -50,10 +52,10 @@ class TransformerDecoder(tf.keras.layers.Layer):
 
     def call(self, source_encoded, target_input, mask=None):
         """
-
         :type source_encoded: object
         :type target_input: object
         """
+
         # set casual attention mask
         # lower diagonal matrix [MAX_SEQ, MAX_SEQ]
         casual_mask = self.get_casual_attention_mask(target_input)
@@ -96,6 +98,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
         """
             This is a dictionary with the parameter's values to re-instantiate the layer when the model is loaded
         """
-        return {"num_heads": self.num_heads,
+        config = super().get_config()
+        config.update({"num_heads": self.num_heads,
                 "dim_emb": self.dim_emb,
-                "dim_dense": self.dim_dense}
+                "dim_dense": self.dim_dense})
+        return config

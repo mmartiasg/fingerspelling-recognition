@@ -1,6 +1,7 @@
 import tensorflow as tf
 
-@tf.keras.utils.register_keras_serializable(name="encoder")
+
+@tf.keras.utils.register_keras_serializable(name="transformers_encoder")
 class TransformerEncoder(tf.keras.layers.Layer):
     # Do not forget the **kwargs
     def __init__(self, num_heads, dim_emb, dim_dense, **kwargs):
@@ -64,7 +65,8 @@ class TransformerEncoder(tf.keras.layers.Layer):
         """
             This is a dictionary with the parameter's values to re-instantiate the layer when the model is loaded
         """
-
-        return {"num_heads": self.num_heads,
+        config = super().get_config()
+        config.update({"num_heads": self.num_heads,
                 "dim_emb": self.dim_emb,
-                "dim_dense": self.dim_dense}
+                "dim_dense": self.dim_dense})
+        return config
