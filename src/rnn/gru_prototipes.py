@@ -1,15 +1,16 @@
-from src.constants import MAX_LENGHT_SOURCE, FEATURES_SIZE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT
-from src.data_utils.dataset import VOCAB_SIZE
+from src.constants import MAX_LENGHT_SOURCE, LATENT_DIMS, DIM_EMBEDDINGS, TARGET_MAX_LENGHT
+from src.data_utils.dataset import VOCAB_SIZE, FEATURES_SIZE 
 import tensorflow as tf
 import tensorflow_models as tfm
-from src.custom.layers import LandmarkEmbedding
-from src.custom.metrics import Levenshtein
+from src.custom.layers import LandmarkEmbeddingV1
+from src.custom.metrics import SparseLevenshtein
+import math
 
 
 def build_gru_model(trial):
     #input
     source = tf.keras.layers.Input(shape=(MAX_LENGHT_SOURCE, FEATURES_SIZE), dtype=tf.float32, name="source")
-    source_emb = LandmarkEmbedding(embedings_dim=FEATURES_SIZE, max_seq_length=MAX_LENGHT_SOURCE)(source)
+    source_emb = LandmarkEmbeddingV1(embedings_dim=FEATURES_SIZE, max_seq_length=MAX_LENGHT_SOURCE)(source)
 
     # ENCODER START
     encoded_source = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(units=FEATURES_SIZE,
@@ -19,6 +20,7 @@ def build_gru_model(trial):
                                                                      ),
                                                         merge_mode="sum"
                                                     )(source_emb)
+    
     for layer_index in range(trial.suggest_int('encoder_rnn_layers', 1, 5, step=1)):
         index_correction = layer_index+2
         encoded_source = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(units=FEATURES_SIZE,
@@ -58,7 +60,7 @@ def build_gru_model(trial):
 
     encoder_decoder_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)),
                                  loss="sparse_categorical_crossentropy",
-                                 metrics=["accuracy", Levenshtein()],
+                                 metrics=["accuracy", SparseLevenshtein()],
                                  jit_compile=False
     )
 

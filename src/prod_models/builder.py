@@ -46,8 +46,8 @@ def build_prod_transformer_model_v2(trial):
     ATTENTION_HEADS = 12
     LR = 1e-4
     DROPOUT_RATE_DECODER=0.1
-    DROPOUT_RATE_OUTPUT=0.2
-    DENSE_LAYERS = 5
+    # DROPOUT_RATE_OUTPUT=0.2
+    # DENSE_LAYERS = 5
     ENCODER_KERNEL_SIZE = 10
 
     if trial is not None:
@@ -55,16 +55,16 @@ def build_prod_transformer_model_v2(trial):
         ATTENTION_HEADS = trial.suggest_int('attention_heads', 1, 8)
         LR = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
         DROPOUT_RATE_DECODER = trial.suggest_float("drop_out_out_decoder", 0.0, 0.5, step=0.05)
-        DENSE_LAYERS = trial.suggest_int('dense_layers', 1, 5)
-        DROPOUT_RATE_OUTPUT = trial.suggest_float("drop_out", 0.0, 0.5, step=0.05)
+        # DENSE_LAYERS = trial.suggest_int('dense_layers', 1, 5)
+        # DROPOUT_RATE_OUTPUT = trial.suggest_float("drop_out", 0.0, 0.5, step=0.05)
         ENCODER_KERNEL_SIZE = trial.suggest_int('encoder_kernel_size', 3, 12)
 
     encoder_decoder_model = FingerSpellingV2(attention_heads=ATTENTION_HEADS,
                                                 embedding_dims=DIM_EMBEDDINGS,
                                                 encodder_kernel_size=ENCODER_KERNEL_SIZE,
-                                                dense_layers_number=DENSE_LAYERS,
+                                                # dense_layers_number=DENSE_LAYERS,
                                                 decoded_dropout_rate=DROPOUT_RATE_DECODER,
-                                                output_dropout_rate=DROPOUT_RATE_OUTPUT,
+                                                # output_dropout_rate=DROPOUT_RATE_OUTPUT,
                                                 max_source_length=MAX_LENGHT_SOURCE,
                                                 max_target_lenght=TARGET_MAX_LENGHT,
                                                 vocab_size=VOCAB_SIZE,
